@@ -21,6 +21,38 @@ SalesforceInteractions.init({
             }
         }
     };
+    
+    const oid = () => {
+        if (window.dataLayer) {
+            for (let i = 0; i < window.dataLayer.length; i++) {
+                if ((window.dataLayer[i].ecommerce && window.dataLayer[i].ecommerce.purchase && window.dataLayer[i].ecommerce.purchase.actionField)) {
+                    return window.dataLayer[i].ecommerce.purchase.actionField.id;
+                }
+            }
+        }
+    };
+    
+    
+    const li = () => {
+        if (window.dataLayer) {
+            for (let i = 0; i < window.dataLayer.length; i++) {
+                if ((window.dataLayer[i].ecommerce && window.dataLayer[i].ecommerce.purchase && window.dataLayer[i].ecommerce.purchase.products)) {
+                    var lineItems = [];
+					var k = window.dataLayer[i].ecommerce.purchase.products;
+                    for (let j = 0; j < k.length; j++) {
+                        let lineItem = {
+                            catalogObjectType: "Product",
+                            catalogObjectId: k[j].id ,
+                            price: k[j].price,
+                            quantity: k[j].quantity,
+                          };
+                          lineItems.push(lineItem);
+					}
+                    return lineItems;
+                }
+            }
+        }
+    };
 
     /*window.mcp = {
         pageType: "Motorcycle PDP",
@@ -302,6 +334,17 @@ SalesforceInteractions.init({
                 isMatch: () => SalesforceInteractions.cashDom(".cms-myo").length > 0,
                 interaction: {
                     name: "View Store MIY Page",
+                },
+            },
+            {
+                name: "View Order Page",
+                isMatch: () => /checkout\/onepage\/success/.test(window.location.href),
+                interaction: {
+                    name: SalesforceInteractions.OrderInteractionName.Purchase,
+                    order: {
+                        id: oid(),
+                        lineItems: li(),
+                    },
                 },
             },
         ],
