@@ -66,7 +66,7 @@ SalesforceInteractions.init({
             },
         },
         pageTypeDefault: {
-            name: "default",
+            name: "view default",
             interaction: {
                 name: "View Default Page",
             },
@@ -192,16 +192,16 @@ SalesforceInteractions.init({
     const sitemapConfigMIY = {
         global: {},
         pageTypeDefault: {
-            name: "default",
+            name: "view default",
             interaction: {
-                name: "MIY Default Page",
+                name: "View MIY Default Page",
             },
         },
         pageTypes: [{
-            name: "Home Page",
+            name: "View MIY Home Page",
             isMatch: () => SalesforceInteractions.cashDom(".cms-home").length > 0,
             interaction: {
-                name: "MIY Home Page",
+                name: "View MIY Home Page",
             },
         }, ],
     };
@@ -224,69 +224,85 @@ SalesforceInteractions.init({
                         });
                     }
                 }),
+                SalesforceInteractions.listener("click", "[data-mcp-productid]", (e) => {
+                    SalesforceInteractions.sendEvent({
+                        interaction: {
+                            name: SalesforceInteractions.CatalogObjectInteractionName.FavoriteCatalogObject,
+                            catalogObject: {
+                                type: "Product",
+                                id: SalesforceInteractions.cashDom(e).attr("data-mcp-productid"),
+                            },
+                        },
+                    });
+                }),
             ],
         },
         pageTypeDefault: {
-            name: "default",
+            name: "view default",
             interaction: {
-                name: "Store Default Page",
+                name: "View Store Default Page",
             },
         },
-        pageTypes: [{
-                name: "Store Home Page",
+        pageTypes: [
+            {
+                name: "View Store Home Page",
                 isMatch: () => SalesforceInteractions.cashDom(".cms-home").length > 0,
                 interaction: {
-                    name: "Store Home Page",
+                    name: "View Store Home Page",
                 },
             },
-            /*{
-                name: "Store Category Page",
-                action: "Store Category Page",
-                isMatch: () => Evergage.cashDom(".catalog-category-view").length > 0,
-                catalog: {
-                    Category: {
-                        _id: () => {
-                            return Evergage.DisplayUtils.pageElementLoaded(".breadcrumbs .items a", "html").then((ele) => {
-                                var a = Evergage.resolvers.buildCategoryId(".breadcrumbs .items a", 1, null, (categoryId) => categoryId.toUpperCase())();
+            {
+                name: "View Store Category Page",
+                isMatch: () => SalesforceInteractions.cashDom(".catalog-category-view").length > 0,
+                interaction: {
+                    name: SalesforceInteractions.CatalogObjectInteractionName.ViewCatalogObject,
+                    catalogObject: {
+                        type: "Category",
+                        id: () => {
+                            return SalesforceInteractions.DisplayUtils.pageElementLoaded(".breadcrumbs .items a", "html").then((ele) => {
+                                var a = SalesforceInteractions.resolvers.buildCategoryId(".breadcrumbs .items a", 1, null, (categoryId) => categoryId.toUpperCase())();
         						if (a){
-        							return a +"|"+Evergage.cashDom(".breadcrumbs .items strong").text().toUpperCase();
+        							return a +"|"+SalesforceInteractions.cashDom(".breadcrumbs .items strong").text().toUpperCase();
         						}else{
-        							return Evergage.cashDom(".breadcrumbs .items strong").text().toUpperCase();
+        							return SalesforceInteractions.cashDom(".breadcrumbs .items strong").text().toUpperCase();
         						}
                             });
                         }
-                    }
-                }
-            },*/
+                    },
+                },
+            },
             {
-                name: "Store Product Detail Page",
+                name: "View Store Product Detail Page",
                 isMatch: () => SalesforceInteractions.cashDom(".catalog-product-view").length > 0,
                 interaction: {
                     name: SalesforceInteractions.CatalogObjectInteractionName.ViewCatalogObject,
                     catalogObject: {
                         type: "Product",
                         id: pid(),
-                        attributes: {},
-                        relatedCatalogObjects: {
-                            Category: SalesforceInteractions.DisplayUtils.pageElementLoaded(".breadcrumbs a", "html").then((ele) => {
-                                return SalesforceInteractions.resolvers.buildCategoryId(".breadcrumbs a", 1, 0, (categoryId) => [categoryId.toUpperCase()], );
-                            }),
-                        },
                     },
                 },
-                /*listeners: [
-                    Evergage.listener("click", ".product-options-bottom", () => {
-                        const lineItem = Evergage.util.buildLineItemFromPageState(".qty-box input.qty");
-                        Evergage.sendEvent({
-                            itemAction: Evergage.ItemAction.AddToCart,
-                            cart: {
-                                singleLine: {
-                                    Product: lineItem
-                                }
-                            }
-                        });
+                listeners: [
+                    SalesforceInteractions.listener("click", ".product-options-bottom", () => {
+                        //settimeout
+                        if(SalesforceInteractions.cashDom(".mage-error").css("display") == "none"){
+                            let lineItem = SalesforceInteractions.mcis.buildLineItemFromPageState(".qty-box input.qty");
+                            lineItem.price = SalesforceInteractions.cashDom("[data-price-amount]").attr("data-price-amount");
+                            SalesforceInteractions.sendEvent({
+                                interaction: {
+                                    name: SalesforceInteractions.CartInteractionName.AddToCart,
+                                    lineItem: lineItem,
+                                },
+                            });
+                        }
                     }),
-                ]*/
+                ]
+            },
+            {
+                name: "View Store MIY Page",
+                isMatch: () => SalesforceInteractions.cashDom(".cms-myo").length > 0,
+                interaction: {
+                    name: "View Store MIY Page",
+                },
             },
         ],
     };
