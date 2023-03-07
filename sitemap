@@ -1,0 +1,304 @@
+SalesforceInteractions.init({
+    cookieDomain: "royalenfield.com",
+    consents: [{
+        purpose: SalesforceInteractions.mcis.ConsentPurpose.Personalization,
+        provider: "Example Consent Manager",
+        status: SalesforceInteractions.ConsentStatus.OptIn,
+    }, ],
+}).then(() => {
+
+    const getQSP = (a) => {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(a);
+    };
+    
+    const pid = () => {
+        if (window.dataLayer) {
+            for (let i = 0; i < window.dataLayer.length; i++) {
+                if ((window.dataLayer[i].ecommerce && window.dataLayer[i].ecommerce.detail && window.dataLayer[i].ecommerce.detail.products)) {
+                    return window.dataLayer[i].ecommerce.detail.products[0].id;
+                }
+            }
+        }
+    };
+
+    /*window.mcp = {
+        pageType: "Motorcycle PDP",
+        pageCategory: "Roadster",
+        productID: "VM00001"
+    };*/
+
+    const sitemapConfigRE = {
+        global: {
+            onActionEvent: (actionEvent) => {
+                const leadID = getQSP("leadID");
+                if (leadID) {
+                    actionEvent.user = actionEvent.user || {};
+                    actionEvent.user.attributes = actionEvent.user.attributes || {};
+                    actionEvent.user.attributes.leadID = leadID;
+                }
+                const utm_source = getQSP("utm_source");
+                if (utm_source) {
+                    actionEvent.user = actionEvent.user || {};
+                    actionEvent.user.attributes = actionEvent.user.attributes || {};
+                    actionEvent.user.attributes.lastUTMSource = utm_source;
+                    actionEvent.user.attributes.lastUTMCampaignDate = new Date();
+                }
+                const utm_medium = getQSP("utm_medium");
+                if (utm_medium) {
+                    actionEvent.user = actionEvent.user || {};
+                    actionEvent.user.attributes = actionEvent.user.attributes || {};
+                    actionEvent.user.attributes.lastUTMMedium = utm_medium;
+                }
+                const utm_campaign = getQSP("utm_campaign");
+                if (utm_campaign) {
+                    actionEvent.user = actionEvent.user || {};
+                    actionEvent.user.attributes = actionEvent.user.attributes || {};
+                    actionEvent.user.attributes.lastUTMCampaign = utm_campaign;
+                }
+                const utm_content = getQSP("utm_content");
+                if (utm_content) {
+                    actionEvent.user = actionEvent.user || {};
+                    actionEvent.user.attributes = actionEvent.user.attributes || {};
+                    actionEvent.user.attributes.lastUTMContent = utm_content;
+                }
+                return actionEvent;
+            },
+        },
+        pageTypeDefault: {
+            name: "default",
+            interaction: {
+                name: "View Default Page",
+            },
+        },
+        pageTypes: [
+            {
+                name: "View Home Page",
+                isMatch: () => SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.pageType") == "Home Page",
+                interaction: {
+                    name: "View Home Page",
+                },
+            }, 
+            {
+                name: "View Motorcycles Listing Page",
+                isMatch: () => SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.pageType") == "Motorcycles Listing Page",
+                interaction: {
+                    name: "View Motorcycles Listing Page",
+                },
+            }, 
+            {
+                name: "View GMA Listing Page",
+                isMatch: () => SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.pageType") == "GMA Listing Page",
+                interaction: {
+                    name: "View GMA Listing Page",
+                },
+            }, 
+            {
+                name: "View Motorcycle PDP",
+                isMatch: () => SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.pageType") == "Motorcycle PDP",
+                interaction: {
+                    name: SalesforceInteractions.CatalogObjectInteractionName.ViewCatalogObject,
+                    catalogObject: {
+                        type: "Product",
+                        id: SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.productID"),
+                        relatedCatalogObjects: {
+                            Category: [SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.pageCategory")],
+                        },
+                    },
+                },
+                contentZones: [
+                    { 
+                        name: "pdp_exit_intent",
+                    },
+                ],
+                listeners: [
+                    SalesforceInteractions.listener("click", "[title='Book a Test Ride'],[title='Book A Test Ride']", () => {
+                        SalesforceInteractions.sendEvent({
+                          interaction: {
+                            name: "View Form BTR",
+                          },
+                        });
+                    }),
+                    SalesforceInteractions.listener("click", ".Download-Specification", () => {
+                        SalesforceInteractions.sendEvent({
+                          interaction: {
+                            name: "Download Specification "+SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.productID"),
+                          },
+                        });
+                    }),
+                ],
+            },
+            {
+                name: "View GMA PDP",
+                isMatch: () => SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.pageType") == "GMA PDP",
+                interaction: {
+                    name: SalesforceInteractions.CatalogObjectInteractionName.ViewCatalogObject,
+                    catalogObject: {
+                        type: "Product",
+                        id: SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.productID"),
+                        relatedCatalogObjects: {
+                            Category: [SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.pageCategory")],
+                        },
+                    },
+                },
+                listeners: [
+                    SalesforceInteractions.listener("click", "[title='Find a dealer']", () => {
+                        SalesforceInteractions.sendEvent({
+                          interaction: {
+                            name: "Find a Dealer",
+                          },
+                        });
+                    }),
+                    SalesforceInteractions.listener("click", "[title='Download Fitting Instructions']", () => {
+                        SalesforceInteractions.sendEvent({
+                          interaction: {
+                            name: "Download Fitting Instructions",
+                          },
+                        });
+                    }),
+                ],
+            },
+            {
+                name: "View Form Page",
+                isMatch: () => SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.pageType") == "Form Page",
+                interaction: {
+                    name: "View Form Page "+SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.formName"),
+                },
+            }, 
+            {
+                name: "View Campaign Page",
+                isMatch: () => SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.pageType") == "Campaign Page",
+                interaction: {
+                    name: SalesforceInteractions.CatalogObjectInteractionName.ViewCatalogObject,
+                    catalogObject: {
+                        type: "Product",
+                        id: SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.productID"),
+                        relatedCatalogObjects: {
+                            Category: [SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.pageCategory")],
+                        },
+                    },
+                },
+            },
+            {
+                name: "View Default Page",
+                isMatch: () => {if(SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.pageType")) return true;},
+                interaction: {
+                    name: "View "+SalesforceInteractions.mcis.getValueFromNestedObject("window.mcp.pageType"),
+                },
+            },
+        ],
+    };
+
+    const sitemapConfigMIY = {
+        global: {},
+        pageTypeDefault: {
+            name: "default",
+            interaction: {
+                name: "MIY Default Page",
+            },
+        },
+        pageTypes: [{
+            name: "Home Page",
+            isMatch: () => SalesforceInteractions.cashDom(".cms-home").length > 0,
+            interaction: {
+                name: "MIY Home Page",
+            },
+        }, ],
+    };
+
+    const sitemapConfigStore = {
+        global: {
+            listeners: [
+                SalesforceInteractions.listener("submit", ".form.subscribe", () => {
+                    const email = SalesforceInteractions.cashDom("#newsletter").val();
+                    if (email) {
+                        SalesforceInteractions.sendEvent({
+                            interaction: {
+                                name: "Email Sign Up - Footer"
+                            },
+                            user: {
+                                attributes: {
+                                    emailAddress: email
+                                }
+                            },
+                        });
+                    }
+                }),
+            ],
+        },
+        pageTypeDefault: {
+            name: "default",
+            interaction: {
+                name: "Store Default Page",
+            },
+        },
+        pageTypes: [{
+                name: "Store Home Page",
+                isMatch: () => SalesforceInteractions.cashDom(".cms-home").length > 0,
+                interaction: {
+                    name: "Store Home Page",
+                },
+            },
+            /*{
+                name: "Store Category Page",
+                action: "Store Category Page",
+                isMatch: () => Evergage.cashDom(".catalog-category-view").length > 0,
+                catalog: {
+                    Category: {
+                        _id: () => {
+                            return Evergage.DisplayUtils.pageElementLoaded(".breadcrumbs .items a", "html").then((ele) => {
+                                var a = Evergage.resolvers.buildCategoryId(".breadcrumbs .items a", 1, null, (categoryId) => categoryId.toUpperCase())();
+        						if (a){
+        							return a +"|"+Evergage.cashDom(".breadcrumbs .items strong").text().toUpperCase();
+        						}else{
+        							return Evergage.cashDom(".breadcrumbs .items strong").text().toUpperCase();
+        						}
+                            });
+                        }
+                    }
+                }
+            },*/
+            {
+                name: "Store Product Detail Page",
+                isMatch: () => SalesforceInteractions.cashDom(".catalog-product-view").length > 0,
+                interaction: {
+                    name: SalesforceInteractions.CatalogObjectInteractionName.ViewCatalogObject,
+                    catalogObject: {
+                        type: "Product",
+                        id: pid(),
+                        attributes: {},
+                        relatedCatalogObjects: {
+                            Category: SalesforceInteractions.DisplayUtils.pageElementLoaded(".breadcrumbs a", "html").then((ele) => {
+                                return SalesforceInteractions.resolvers.buildCategoryId(".breadcrumbs a", 1, 0, (categoryId) => [categoryId.toUpperCase()], );
+                            }),
+                        },
+                    },
+                },
+                /*listeners: [
+                    Evergage.listener("click", ".product-options-bottom", () => {
+                        const lineItem = Evergage.util.buildLineItemFromPageState(".qty-box input.qty");
+                        Evergage.sendEvent({
+                            itemAction: Evergage.ItemAction.AddToCart,
+                            cart: {
+                                singleLine: {
+                                    Product: lineItem
+                                }
+                            }
+                        });
+                    }),
+                ]*/
+            },
+        ],
+    };
+
+
+
+
+    if (/store/.test(window.location.hostname)) {
+        SalesforceInteractions.initSitemap(sitemapConfigStore);
+    } else if (/makeityours/.test(window.location.hostname)) {
+        SalesforceInteractions.initSitemap(sitemapConfigMIY);
+    } else {
+        SalesforceInteractions.initSitemap(sitemapConfigRE);
+    }
+});
